@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>HTMLCraft</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background-color: black;
+  }
+
+  #game-canvas {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+  }
+
+  #menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+  }
+
+  #menu button {
+    padding: 10px 20px;
+    margin: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  #menu button:hover {
+    background-color: #3e8e41;
+  }
+
+  #crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    display: none;
+  }
+
+  #crosshair::before,
+  #crosshair::after {
+    content: '';
+    position: absolute;
+    background-color: white;
+  }
+
+  #crosshair::before {
+    width: 100%;
+    height: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  #crosshair::after {
+    width: 2px;
+    height: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+</style>
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+  <div id="menu">
+    <h1>HTMLCraft</h1>
+    <button id="play-button">Play</button>
+  </div>
+  <div id="crosshair"></div>
+
+  <script>
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('webgl');
+    const menu = document.getElementById('menu');
+    const playButton = document.getElementById('play-button');
+    const crosshair = document.getElementById('crosshair');
+
+    let gameRunning = false;
+    let camera = {
+      x: 0,
+      y: 0,
+      z: 5,
+      pitch: 0,
+      yaw: 0,
+    };
+
+    let blocks = [];
+    let texture;
+    let spriteSheet;
+    const spriteWidth = 16; // Width of each sprite in the spritesheet
+    const spriteHeight = 16; // Height of each sprite in the spritesheet
+
+    function initWebGL() {
+      if (!ctx) {
+        alert('Unable to initialize WebGL. Your browser may not support it.');
+        return;
+      }
+
+      ctx.clearColor(0.5, 0.8, 1.0, 1.0);
+      ctx.enable(ctx.DEPTH_TEST);
+
+      // Sprite sheet loading
+      spriteSheet = ctx.createTexture();
+      const image = new Image();
+      image.onload = function() {
+        ctx.bindTexture(ctx.TEXTURE_2D, spriteSheet);
+        ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.RGBA, ctx.UNSIGNED_BYTE, image);
+        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST);
+        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.NEAREST);
+        ctx.generateMipmap(ctx.TEXTURE_2D);
+        ctx.bindTexture(ctx.TEXTURE_2D, null);
+      };
+      image.src = 'spritesheet.png'; // Replace with your spritesheet path
+
+    }
+
+    function render() {
+      if (!gameRunning) return;
+
+      ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
+
+      // Example drawing a sprite from the spritesheet
+      if (spriteSheet) {
+        ctx.bindTexture(ctx.TEXTURE_2D, spriteSheet);
+        // Calculate texture coordinates for a specific sprite
+        const spriteX = 0; // Example: First sprite in the row
+        const spriteY = 0; // Example: First row
+        const u1 = spriteX * spriteWidth / image.width;
+        const v1 = spriteY * spriteHeight / image.height;
+        const u2 = (spriteX + 1) * spriteWidth / image.width;
+        const v2 = (spriteY + 1) * spriteHeight / image.height;
+
+        // In real game code, you'd use these u1,v1,u2,v2 coordinates
+        // to map the correct texture portion to the quad.
+        // This example lacks the webGL vertex and buffer code to properly render.
+        // ctx.drawArrays(ctx.TRIANGLES, 0, 6);
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    function startGame() {
+      gameRunning = true;
+      menu.style.display = 'none';
+      crosshair.style.display = 'block';
+      initWebGL();
+      render();
+      setupControls();
+    }
+
+    function setupControls() {
+      document.addEventListener('mousemove', (event) => {
+        if (!gameRunning) return;
+        camera.yaw -= event.movementX * 0.002;
+        camera.pitch -= event.movementY * 0.002;
+        camera.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.pitch));
+      });
+      document.addEventListener('keydown', (event) => {
+        if (!gameRunning) return;
+        const speed = 0.1;
+        const forward = [
+          Math.sin(camera.yaw),
+          0,
+          Math.cos(camera.yaw),
+        ];
+        const right = [
+          Math.cos(camera.yaw),
+          0,
+          -Math.sin(camera.yaw),
+        ];
+        if (event.key === 'w') {
+          camera.x += forward[0] * speed;
+          camera.z += forward[2] * speed;
+        } else if (event.key === 's') {
+          camera.x -= forward[0] * speed;
+          camera.z -= forward[2] * speed;
+        } else if (event.key === 'a') {
+          camera.x -= right[0] * speed;
+          camera.z -= right[2] * speed;
+        } else if (event.key === 'd') {
+          camera.x += right[0] * speed;
+          camera.z += right[2] * speed;
+        } else if (event.key === ' ') {
+          camera.y += speed;
+        } else if (event.key === 'Shift') {
+          camera.y -= speed;
+        }
+      });
+    }
+
+    playButton.addEventListener('click', startGame);
+  </script>
+</body>
+</html>
