@@ -6,7 +6,7 @@
   body {
     margin: 0;
     overflow: hidden;
-    background-color: black;
+    background-color: ;
   }
 
   #game-canvas {
@@ -262,7 +262,7 @@
 
     function generateWorld() {
       // ... (generateWorld function from previous examples) ...
-      const worldSize = 16;
+      const worldSize = 5000;
       for (let x = 0; x < worldSize; x++) {
         for (let z = 0; z < worldSize; z++) {
           const height = Math.floor(Math.random() * 3);
@@ -280,9 +280,8 @@
     }
 
     function render() {
-      // ... (render function from previous examples) ...
-      if (!gameRunning) return;
-
+        if (!gameRunning) return;
+      
       ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
 
       if (spriteSheet && shaderProgram) {
@@ -449,77 +448,6 @@
       updateController();
       render();
       requestAnimationFrame(renderLoop);
-    }
-     function breakBlock() {
-      const ray = getRay();
-      const block = getIntersectedBlock(ray);
-      if (block) {
-        blocks = blocks.filter(b => b !== block);
-      }
-    }
-
-    function getRay() {
-      const direction = [
-        -Math.sin(camera.yaw) * Math.cos(camera.pitch),
-        Math.sin(camera.pitch),
-        -Math.cos(camera.yaw) * Math.cos(camera.pitch)
-      ];
-      return { origin: { x: camera.x, y: camera.y, z: camera.z }, direction: direction };
-    }
-
-    function getIntersectedBlock(ray) {
-      for (const block of blocks) {
-        if (rayIntersectsBlock(ray, block)) {
-          return block;
-        }
-      }
-      return null;
-    }
-
-    function rayIntersectsBlock(ray, block) {
-      const box = {
-        minX: block.x - 0.5, minY: block.y - 0.5, minZ: block.z - 0.5,
-        maxX: block.x + 0.5, maxY: block.y + 0.5, maxZ: block.z + 0.5
-      };
-
-      let tMin = (box.minX - ray.origin.x) / ray.direction[0];
-      let tMax = (box.maxX - ray.origin.x) / ray.direction[0];
-
-      if (tMin > tMax) {
-        [tMin, tMax] = [tMax, tMin];
-      }
-
-      let tyMin = (box.minY - ray.origin.y) / ray.direction[1];
-      let tyMax = (box.maxY - ray.origin.y) / ray.direction[1];
-
-      if (tyMin > tyMax) {
-        [tyMin, tyMax] = [tyMax, tyMin];
-      }
-
-      if ((tMin > tyMax) || (tyMin > tMax)) {
-        return false;
-      }
-
-      if (tyMin > tMin) {
-        tMin = tyMin;
-      }
-
-      if (tyMax < tMax) {
-        tMax = tyMax;
-      }
-
-      let tzMin = (box.minZ - ray.origin.z) / ray.direction[2];
-      let tzMax = (box.maxZ - ray.origin.z) / ray.direction[2];
-
-      if (tzMin > tzMax) {
-        [tzMin, tzMax] = [tzMax, tzMin];
-      }
-
-      if ((tMin > tzMax) || (tzMin > tMax)) {
-        return false;
-      }
-
-      return true;
     }
     playButton.addEventListener('click', startGame);
     closeInventoryButton.addEventListener('click', () => {
